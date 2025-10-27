@@ -38,7 +38,6 @@ public class ChatServiceImpl implements ChatService {
         return dao.deleteQA(qaId);
     }
 
-    // ✅ DB 매칭용
     @Override
     public String findAnswer(String question) {
         List<ChatDto> list = dao.selectAll();
@@ -50,12 +49,11 @@ public class ChatServiceImpl implements ChatService {
         return null;
     }
 
-    // ✅ ChatGPT fallback
     @Override
     public String askGPT(String question) {
         String apiKey = System.getenv("OPENAI_API_KEY");
         if (apiKey == null || apiKey.isEmpty()) {
-            apiKey = "sk-여기에_API_KEY_입력"; // 환경변수 미설정 시 임시용
+            apiKey = "sk-여기에_API_KEY_입력"; 
         }
 
         String endpoint = "https://api.openai.com/v1/chat/completions";
@@ -83,7 +81,7 @@ public class ChatServiceImpl implements ChatService {
                     .replace("\\", "");
         } catch (Exception e) {
             e.printStackTrace();
-            return "현재 AI 서버 응답이 지연 중입니다 😥";
+            return "현재 AI 서버 응답이 지연 중입니다 ";
         }
     }
 }
