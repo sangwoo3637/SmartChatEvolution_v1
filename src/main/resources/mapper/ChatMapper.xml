@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.smartchat.dao.ChatDao">
+
+    <!-- ✅ 전체 목록 조회 -->
+    <select id="selectAll" resultType="com.smartchat.dto.ChatDto">
+        SELECT QA_ID AS qaId,
+               QUESTION AS question,
+               ANSWER AS answer
+        FROM CHATBOT_QA
+        ORDER BY QA_ID ASC
+    </select>
+
+    <!-- ✅ 단일 조회 -->
+    <select id="selectById" parameterType="int" resultType="com.smartchat.dto.ChatDto">
+        SELECT QA_ID AS qaId,
+               QUESTION AS question,
+               ANSWER AS answer
+        FROM CHATBOT_QA
+        WHERE QA_ID = #{qaId}
+    </select>
+
+    <!-- ✅ 데이터 삽입 -->
+    <insert id="insertQA" parameterType="com.smartchat.dto.ChatDto">
+        INSERT INTO CHATBOT_QA (QA_ID, QUESTION, ANSWER)
+        VALUES (CHATBOT_QA_SEQ.NEXTVAL, #{question}, #{answer})
+    </insert>
+
+    <!-- ✅ 데이터 수정 -->
+    <update id="updateQA" parameterType="com.smartchat.dto.ChatDto">
+        UPDATE CHATBOT_QA
+        SET QUESTION = #{question},
+            ANSWER = #{answer}
+        WHERE QA_ID = #{qaId}
+    </update>
+
+    <!-- ✅ 데이터 삭제 -->
+    <delete id="deleteQA" parameterType="int">
+        DELETE FROM CHATBOT_QA WHERE QA_ID = #{qaId}
+    </delete>
+
+</mapper>

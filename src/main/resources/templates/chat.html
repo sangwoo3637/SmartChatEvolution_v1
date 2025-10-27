@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartChat 💬</title>
+  <style>
+    body { font-family: '맑은 고딕'; background: #eef2f7; margin: 0; padding: 0; }
+    h2 { text-align: center; background: #0078d7; color: white; padding: 15px 0; margin: 0; }
+    #chatBox { width: 70%; margin: 30px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    #messages { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 5px; background: #f9f9f9; }
+    .msg { margin: 10px 0; display: flex; }
+    .msg.user { justify-content: flex-end; }
+    .msg.bot { justify-content: flex-start; }
+    .bubble { padding: 10px 14px; border-radius: 12px; max-width: 70%; line-height: 1.4; }
+    .user .bubble { background: #0078d7; color: white; border-bottom-right-radius: 0; }
+    .bot .bubble { background: #e4e6eb; color: #333; border-bottom-left-radius: 0; }
+    #inputArea { display: flex; margin-top: 15px; }
+    #userInput { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    #sendBtn { padding: 10px 20px; background: #0078d7; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; }
+    #sendBtn:hover { background: #005fa3; }
+  </style>
+</head>
+<body>
+  <h2>💬 SmartChat FAQ Bot</h2>
+  <div id="chatBox">
+    <div id="messages">
+      <div class="msg bot"><div class="bubble">안녕하세요! 무엇을 도와드릴까요? 😊</div></div>
+    </div>
+
+    <div id="inputArea">
+      <input type="text" id="userInput" placeholder="메시지를 입력하세요..." />
+      <button id="sendBtn">전송</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      const messages = document.getElementById("messages");
+      messages.insertAdjacentHTML('beforeend',
+        `<div class="msg user"><div class="bubble">${msg}</div></div>`);
+      input.value = "";
+
+      const res = await fetch("/chat/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+
+      const data = await res.json();
+      messages.insertAdjacentHTML('beforeend',
+        `<div class="msg bot"><div class="bubble">${data.bot}</div></div>`);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("userInput").addEventListener("keypress", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
