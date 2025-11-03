@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartChat 관리자 로그</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0b1220; color: #e6edf3; margin: 0; }
+        h2 { margin: 20px; }
+        table { width: 96%; margin: 20px auto; border-collapse: collapse; background: #111827; }
+        th, td { padding: 10px; border-bottom: 1px solid #1f2937; text-align: left; }
+        th { background: #1f2937; color: #93c5fd; }
+        tr:hover { background: #1e293b; }
+        .filter { margin: 20px; display: flex; gap: 10px; }
+        input { padding: 6px 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e6edf3; }
+        button { padding: 6px 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e6edf3; cursor: pointer; }
+    </style>
+</head>
+<body>
+<h2>💬 SmartChat - 대화 로그 관리</h2>
+<div class="filter">
+    <input id="search" placeholder="닉네임 / 내용 검색..." />
+    <button onclick="loadData()">검색</button>
+</div>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>보낸 사람</th>
+        <th>메시지</th>
+        <th>유형</th>
+        <th>시간</th>
+    </tr>
+    </thead>
+    <tbody id="logBody"></tbody>
+</table>
+
+<script>
+async function loadData() {
+    const res = await fetch('/admin/logs/data');
+    const data = await res.json();
+    const keyword = document.getElementById('search').value.toLowerCase();
+    const body = document.getElementById('logBody');
+    body.innerHTML = '';
+
+    data
+      .filter(item =>
+          item.sender.toLowerCase().includes(keyword) ||
+          (item.message && item.message.toLowerCase().includes(keyword))
+      )
+      .forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.logId}</td>
+          <td>${row.sender}</td>
+          <td>${row.message}</td>
+          <td>${row.type}</td>
+          <td>${row.timestamp ? row.timestamp.replace('T',' ') : ''}</td>
+        `;
+        body.appendChild(tr);
+      });
+}
+loadData();
+</script>
+</body>
+</html>

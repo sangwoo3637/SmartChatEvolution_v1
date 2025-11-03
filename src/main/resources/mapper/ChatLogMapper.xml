@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.smartchat.dao.ChatLogDao">
+
+    <insert id="insertLog" parameterType="com.smartchat.dto.ChatLogDto">
+        INSERT INTO CHAT_LOG (LOG_ID, SENDER, MESSAGE, TYPE, TIMESTAMP)
+        VALUES (CHAT_LOG_SEQ.NEXTVAL, #{sender}, #{message}, #{type}, SYSTIMESTAMP)
+    </insert>
+
+    <select id="selectAll" resultType="com.smartchat.dto.ChatLogDto">
+        SELECT LOG_ID, SENDER, MESSAGE, TYPE, TIMESTAMP
+        FROM CHAT_LOG
+        ORDER BY LOG_ID DESC
+    </select>
+
+</mapper>

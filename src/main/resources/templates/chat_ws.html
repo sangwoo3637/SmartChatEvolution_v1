@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>SmartChat - WebSocket Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,sans-serif;margin:0;background:#0b1220;color:#e6edf3}
+    header{padding:16px 20px;background:#111827;border-bottom:1px solid #1f2937}
+    .wrap{max-width:920px;margin:0 auto;padding:20px}
+    .panel{background:#0f172a;border:1px solid #1f2937;border-radius:14px;padding:16px}
+    .row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    input[type=text]{flex:1;padding:10px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e6edf3}
+    button{padding:10px 14px;border-radius:10px;border:1px solid #334155;background:#111827;color:#e6edf3;cursor:pointer}
+    button:hover{background:#1f2937}
+    .log{height:420px;overflow:auto;padding:10px;background:#0b1220;border-radius:10px;border:1px solid #1f2937}
+    .msg{margin:8px 0;padding:8px 10px;border-radius:10px;background:#111827;border:1px solid #223047}
+    .sys{opacity:.8;font-size:.9rem}
+    .me{border-color:#375a7f}
+    .time{opacity:.6;font-size:.8rem;margin-left:6px}
+  </style>
+</head>
+<body>
+<header>
+  <strong>SmartChatEvolution_v1 · Level 2 — WebSocket (STOMP + SockJS)</strong>
+</header>
+<div class="wrap">
+  <div class="panel">
+    <div class="row">
+      <input id="nickname" type="text" placeholder="닉네임(기본: guest)" />
+      <button id="btnConnect">접속</button>
+      <button id="btnDisconnect" disabled>해제</button>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="row" style="margin-top:10px;">
+      <input id="message" type="text" placeholder="메시지를 입력하고 Enter" disabled />
+      <button id="btnSend" disabled>보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- CDN: SockJS & STOMP -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+  let stomp = null;
+  const $ = (id)=>document.getElementById(id);
+  const log = (html)=> { const el=document.createElement('div'); el.innerHTML=html; $('log').appendChild(el); $('log').scrollTop=$('log').scrollHeight; }
+  const fmt = (ts)=> new Date(ts).toLocaleTimeString();
+
+  function setConnected(flag){
+    $('btnConnect').disabled = flag;
+    $('btnDisconnect').disabled = !flag;
+    $('message').disabled = !flag;
+    $('btnSend').disabled = !flag;
+  }
+
+  function connect(){
+    const sock = new SockJS('/ws/chat');
+    stomp = Stomp.over(sock);
+    // 콘솔 로그 과다 방지: 필요시 다음 줄 주석 해제
+    // stomp.debug = null;
+
+    stomp.connect({}, () => {
+      setConnected(true);
+      const nick = $('nickname').value.trim() || 'guest';
+      // 구독
+      stomp.subscribe('/topic/chat', (frame) => {
+        const msg = JSON.parse(frame.body);
+        if(msg.type === 'JOIN'){
+          log(`<div class="msg sys">🟢 <b>${msg.sender}</b> 님이 입장했습니다 <span class="time">${fmt(msg.timestamp)}</span></div>`);
+        }else if(msg.type === 'LEAVE'){
+          log(`<div class="msg sys">🔴 <b>${msg.sender}</b> 님이 퇴장했습니다 <span class="time">${fmt(msg.timestamp)}</span></div>`);
+        }else{
+          const mine = (msg.sender === nick) ? 'me' : '';
+          log(`<div class="msg ${mine}"><b>${msg.sender}</b>: ${msg.content} <span class="time">${fmt(msg.timestamp)}</span></div>`);
+        }
+      });
+      // 입장 알림
+      stomp.send('/app/chat.join', {}, JSON.stringify({
+        type: 'JOIN', sender: nick, content: '', timestamp: Date.now()
+      }));
+    }, (err) => {
+      log(`<div class="msg sys">❌ 연결 실패: ${err}</div>`);
+      setConnected(false);
+    });
+  }
+
+  function disconnect(){
+    if(stomp){
+      const nick = $('nickname').value.trim() || 'guest';
+      try {
+        stomp.send('/app/chat.leave', {}, JSON.stringify({
+          type: 'LEAVE', sender: nick, content: '', timestamp: Date.now()
+        }));
+      } catch(e){}
+      stomp.disconnect(()=> setConnected(false));
+      stomp = null;
+    }
+  }
+
+  function send(){
+    if(!stomp) return;
+    const text = $('message').value.trim();
+    if(!text) return;
+    const nick = $('nickname').value.trim() || 'guest';
+    stomp.send('/app/chat.send', {}, JSON.stringify({
+      type: 'CHAT', sender: nick, content: text, timestamp: Date.now()
+    }));
+    $('message').value = '';
+  }
+
+  $('btnConnect').onclick = connect;
+  $('btnDisconnect').onclick = disconnect;
+  $('btnSend').onclick = send;
+  $('message').addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
+</script>
+</body>
+</html>
